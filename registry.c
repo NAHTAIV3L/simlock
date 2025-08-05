@@ -1,0 +1,50 @@
+
+#include "ext-session-lock-v1.h"
+#include "state.h"
+#include <string.h>
+#include <stdlib.h>
+
+extern struct wl_seat_listener wl_seat_listener;
+
+void wl_registry_global(void *data, struct wl_registry *wl_registry,
+                        uint32_t name, const char *interface,
+                        uint32_t version) {
+    client_state *state = data;
+
+    printf("iface: %s v%d\n", interface, version);
+
+    if (!strcmp(interface, wl_compositor_interface.name)) {
+        state->compositor = wl_registry_bind(wl_registry, name, &wl_compositor_interface, version);
+        printf(" > bound to %s v%d\n", interface, version);
+    }
+    else if (!strcmp(interface, wl_shm_interface.name)) {
+        state->shm = wl_registry_bind(wl_registry, name, &wl_shm_interface, version);
+    }
+    else if (!strcmp(interface, wl_seat_interface.name)) {
+        state->seat = wl_registry_bind(wl_registry, name, &wl_seat_interface, version);
+        wl_seat_add_listener(state->seat, &wl_seat_listener, state);
+        printf(" > bound to %s v%d\n", interface, version);
+    }
+    else if (!strcmp(interface, wl_output_interface.name)) {
+        state->num_windows++;
+        state->windows = realloc(state->windows, state->num_windows * sizeof(window_t));
+        window_t* win = &state->windows[state->num_windows - 1];
+        memset(win, 0, sizeof(window_t));
+        win->state = state;
+        win->output = wl_registry_bind(wl_registry, name, &wl_output_interface, version);
+        printf(" > bound to %s v%d\n", interface, version);
+    }
+    else if (!strcmp(interface, ext_session_lock_manager_v1_interface.name)) {
+        state->ext_session_lock_manager = wl_registry_bind(wl_registry, name, &ext_session_lock_manager_v1_interface, version);
+        printf(" > bound to %s v%d\n", interface, version);
+    }
+}
+
+void wl_registry_global_remove(void *data, struct wl_registry *wl_registry, uint32_t name) {
+
+}
+
+struct wl_registry_listener wl_registry_listener = {
+    .global = wl_registry_global,
+    .global_remove = wl_registry_global_remove,
+};
