@@ -1,10 +1,10 @@
 
-#include "ext-session-lock-v1.h"
 #include "state.h"
 #include <string.h>
 #include <stdlib.h>
 
 extern struct wl_seat_listener wl_seat_listener;
+extern struct ext_session_lock_surface_v1_listener ext_session_lock_surface_listener;
 
 void wl_registry_global(void *data, struct wl_registry *wl_registry,
                         uint32_t name, const char *interface,
@@ -32,6 +32,13 @@ void wl_registry_global(void *data, struct wl_registry *wl_registry,
         memset(win, 0, sizeof(window_t));
         win->state = state;
         win->output = wl_registry_bind(wl_registry, name, &wl_output_interface, version);
+        if (state->locked) {
+            win->surface = wl_compositor_create_surface(state->compositor);
+            win->ext_session_lock_surface = ext_session_lock_v1_get_lock_surface(state->ext_session_lock, win->surface, win->output);
+            ext_session_lock_surface_v1_add_listener(win->ext_session_lock_surface, &ext_session_lock_surface_listener, &state);
+            wl_display_roundtrip(state->display);
+        }
+        win->name = name;
         printf(" > bound to %s v%d\n", interface, version);
     }
     else if (!strcmp(interface, ext_session_lock_manager_v1_interface.name)) {
@@ -41,7 +48,16 @@ void wl_registry_global(void *data, struct wl_registry *wl_registry,
 }
 
 void wl_registry_global_remove(void *data, struct wl_registry *wl_registry, uint32_t name) {
-
+    client_state *state = data;
+    for (int i = 0; i < state->num_windows; i++) {
+        if (state->windows[i].name == name) {
+            window_destroy(&state->windows[i]);
+            if (i != state->num_windows - 1) {
+                memmove(&state->windows[i], &state->windows[i + 1], state->num_windows - (i + 1));
+                state->num_windows--;
+            }
+        }
+    }
 }
 
 struct wl_registry_listener wl_registry_listener = {

@@ -6,8 +6,13 @@
 #include <wayland-cursor.h>
 #include <xkbcommon/xkbcommon.h>
 #include <stdbool.h>
+#include <pthread.h>
+#include <sys/timerfd.h>
 #include "./window.h"
-#include "./ext-session-lock-v1.h"
+#include <ext-session-lock-v1.h>
+#define CLEAR_BLACK 0
+#define CLEAR_GREEN 1
+#define CLEAR_RED 2
 
 typedef struct _client_state {
     struct wl_display* display;
@@ -38,8 +43,16 @@ typedef struct _client_state {
     EGLConfig egl_config;
     EGLContext egl_context;
 
-    bool running;
-    bool opengl_initalized;
+    bool running, opengl_initalized, locked, run_unlock;
+    char* buffer;
+    uint32_t buffer_len;
+
+    pthread_mutex_t input_lock1, input_lock2;
+    int key_repeat_timer_fd;
+    xkb_keysym_t repeat_keysym;
+    int key_repeat_rate, key_repeat_delay;
+
+    int clear_color;
 
 } client_state;
 

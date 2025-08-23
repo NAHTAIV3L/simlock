@@ -2,7 +2,9 @@
 #include <assert.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include <stdlib.h>
+#include "./util.h"
+#include <string.h>
+#include <wayland-client-protocol.h>
 
 void wl_keyboard_keymap(void *data, struct wl_keyboard *wl_keyboard,
                         uint32_t format, int32_t fd, uint32_t size) {
@@ -34,19 +36,10 @@ void wl_keyboard_leave(void *data, struct wl_keyboard *wl_keyboard,
                        uint32_t serial, struct wl_surface *surface) {
 }
 
-void wl_keyboard_key(void *data, struct wl_keyboard *wl_keyboard,
-                     uint32_t serial, uint32_t time, uint32_t key,
-                     uint32_t key_state) {
-    if (key_state == 0) return;
+void wl_keyboard_key(void *data, struct wl_keyboard *wl_keyboard, uint32_t serial, uint32_t time, uint32_t key, uint32_t key_state) {
     client_state* state = data;
-
-    state->running = false;
-    return;
-
     xkb_keysym_t keysym = xkb_state_key_get_one_sym(state->xkb_state, key + 8);
-    if (keysym == XKB_KEY_q) {
-        state->running = false;
-    }
+    handle_keypress(state, keysym, key_state);
 }
 
 void wl_keyboard_modifiers(void *data, struct wl_keyboard *wl_keyboard,
@@ -59,6 +52,9 @@ void wl_keyboard_modifiers(void *data, struct wl_keyboard *wl_keyboard,
 
 void wl_keyboard_repeat_info(void *data, struct wl_keyboard *wl_keyboard,
                              int32_t rate, int32_t delay) {
+    client_state* state = data;
+    state->key_repeat_rate = rate;
+    state->key_repeat_delay = delay;
 }
 
 struct wl_keyboard_listener wl_keyboard_listener = {

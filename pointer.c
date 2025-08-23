@@ -1,4 +1,4 @@
-#include "./state.h"
+#include <wayland-client.h>
 
 void wl_pointer_enter(void *data, struct wl_pointer *pointer, uint32_t serial,
                    struct wl_surface *surface, wl_fixed_t fixed_surface_x, wl_fixed_t fixed_surface_y) {

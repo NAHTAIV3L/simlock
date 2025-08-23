@@ -6,7 +6,7 @@
 #include <wayland-egl.h>
 #include <wayland-cursor.h>
 #include <stdbool.h>
-#include "./ext-session-lock-v1.h"
+#include <ext-session-lock-v1.h>
 
 typedef struct _client_state client_state;
 
@@ -18,9 +18,11 @@ typedef struct {
     struct wl_egl_window* egl_window;
     EGLSurface egl_surface;
     uint32_t width, height;
+    uint32_t name;
 } window_t;
 
-bool window_initalize_egl(window_t* win);
+void window_init(window_t *win);
+void window_destroy(window_t *win);
 
 void window_redraw(window_t* win);
 

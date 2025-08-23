@@ -1,35 +1,56 @@
 BIN=simlock
 CC=gcc
-LIBS=egl wayland-client wayland-cursor gl wayland-egl dbus-1 xkbcommon
-CFLAGS=-Wall -g $(shell pkg-config --cflags $(LIBS))
+OBJDIR=objs
+LIBS=egl wayland-client gl wayland-egl dbus-1 xkbcommon pam
+CFLAGS=-Wall -g $(shell pkg-config --cflags $(LIBS)) -I$(OBJDIR)
 LDFLAGS=$(shell pkg-config --libs $(LIBS))
-VPATH=/usr/share/wayland-protocols/staging/ext-session-lock/
+VPATH=/usr/share/wayland-protocols/staging/ext-session-lock/:$(OBJDIR)
 WLPROT=ext-session-lock-v1.xml
-WLC=$(WLPROT:.xml=.c)
-WLH=$(WLPROT:.xml=.h)
+WLC=$(OBJDIR)/$(WLPROT:.xml=.c)
+WLH=$(OBJDIR)/$(WLPROT:.xml=.h)
 SRC=$(WLC) $(wildcard *.c) $(wildcard glad/*.c)
-OBJ=$(SRC:.c=.o)
+OBJ=$(patsubst %.c,$(OBJDIR)/%.o, $(notdir $(SRC)))
 
-all: $(BIN)
+.SILENT: $(OBJ) $(WLC) $(WLH) $(BIN) $(OBJDIR) compile_flags
+
+all: $(OBJDIR) $(BIN)
+
+$(OBJDIR):
+	[ -d $@ ] || mkdir -p $@
 
 $(BIN): $(OBJ)
+	printf "\tLD %s\n" $@
 	$(CC) $(LDFLAGS) $^ -o $@
 
-%.o: %.c %.h
+$(OBJDIR)/%.o: %.c %.h
+	printf "\tCC %s\n" $@
 	$(CC) $(CFLAGS) -c $< -o $@
 
-.PRECIOUS: %.c
-%.c: %.xml %.h
+$(OBJDIR)/%.o: */%.c */%.h
+	printf "\tCC %s\n" $@
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c
+	printf "\tCC %s\n" $@
+	$(CC) $(CFLAGS) -c $< -o $@
+
+.PRECIOUS: $(OBJDIR)/%.c
+$(OBJDIR)/%.c: %.xml $(OBJDIR)/%.h
+	printf "\twayland-scanner %s\n" $@
 	wayland-scanner private-code $<  $@
 
-.PRECIOUS: %.h
-%.h: %.xml
+.PRECIOUS: $(OBJDIR)/%.h
+$(OBJDIR)/%.h: %.xml
+	printf "\twayland-scanner %s\n" $@
 	wayland-scanner client-header $<  $@
 
-clean:
-	$(RM) $(BIN) *.o $(WLC) $(WLH)
+compile_flags:
+	echo $(CFLAGS) | tr ' ' '\n' > compile_flags.txt
 
-run: $(BIN)
+clean:
+	rm -rf $(BIN) $(OBJDIR)
+
+run: all
 	./$(BIN)
 
-.PHONY: all clean run
+.PHONY: all clean run compile_flags

@@ -1,4 +1,3 @@
 compile_flags.txt
-ext-session-lock-v1.*
-*.o
+objs
 simlock

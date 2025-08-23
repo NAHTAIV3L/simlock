@@ -1,9 +1,9 @@
+#include "./state.h"
 #include <stdlib.h>
-#include <stdio.h>
-#include "./ext-session-lock-v1.h"
 
 void ext_session_lock_locked(void *data, struct ext_session_lock_v1 *ext_session_lock_v1) {
-    // client_state *state = data;
+    client_state *state = data;
+    state->locked = true;
     printf("Locking session\n");
 }
 

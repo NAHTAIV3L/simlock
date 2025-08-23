@@ -1,7 +1,11 @@
 #include "state.h"
+#include "util.h"
 #include <EGL/eglext.h>
 #include <string.h>
 #include <unistd.h>
+#include <signal.h>
+#include <stdlib.h>
+#include "./pam.h"
 
 extern struct wl_registry_listener wl_registry_listener;
 extern struct ext_session_lock_v1_listener ext_session_lock_listener;
@@ -85,10 +89,27 @@ bool initalize_egl(client_state *state) {
     return true;
 }
 
-int main() {
 
-    client_state state = { 0 };
+static client_state state = { 0 };
+
+void handle_sigusr1(int sig) {
+    if (sig == SIGUSR1) {
+        state.run_unlock = true;
+        printf("Unlocking due to SIGUSR1\n");
+    }
+}
+
+int main() {
+    struct sigaction sigact = { 0 };
+    sigact.sa_handler = handle_sigusr1;
+    if (sigaction(SIGUSR1, &sigact, NULL) == -1) {
+        fprintf(stderr, "Failed to install signal handler\n");
+        return 1;
+    }
     state.running = true;
+    state.buffer = NULL;
+
+    state.key_repeat_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 
     state.display = wl_display_connect(NULL);
     if (!state.display) {
@@ -118,21 +139,21 @@ int main() {
         window_t* win = &state.windows[i];
         win->surface = wl_compositor_create_surface(state.compositor);
         win->ext_session_lock_surface = ext_session_lock_v1_get_lock_surface(state.ext_session_lock, win->surface, win->output);
-        ext_session_lock_surface_v1_add_listener(win->ext_session_lock_surface, &ext_session_lock_surface_listener, &state);
+        ext_session_lock_surface_v1_add_listener(win->ext_session_lock_surface, &ext_session_lock_surface_listener, win);
         wl_display_roundtrip(state.display);
     }
 
+    pthread_mutex_lock(&state.input_lock1);
+    start_pam(&state);
+
     while (state.running) {
-        wl_display_dispatch_pending(state.display);
-        wl_display_flush(state.display);
-        for (int i = 0; i < state.num_windows; i++) {
-            window_redraw(&state.windows[i]);
-        }
+        poll_events(&state);
+        redraw(&state);
+        if (state.run_unlock) break;
     }
+    wl_display_dispatch(state.display);
+    unlock(&state);
 
-    ext_session_lock_v1_unlock_and_destroy(state.ext_session_lock);
-    wl_display_roundtrip(state.display);
     printf("Unlocking session\n");
-
     return 0;
 }
