@@ -1,7 +1,7 @@
-#include "./state.h"
-#include "./window.h"
-#include "./glad/glad.h"
 #include <stdlib.h>
+#include "state.h"
+#include "window.h"
+#include "glad/glad.h"
 
 extern PFNEGLCREATEPLATFORMWINDOWSURFACEPROC eglCreatePlatformWindowSurfaceEXT;
 

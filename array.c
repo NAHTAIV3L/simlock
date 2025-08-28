@@ -1,7 +1,7 @@
-#include "./array.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "array.h"
 
 
 array_info* array_new_(size_t item_size, size_t capacity) {

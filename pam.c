@@ -4,7 +4,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "./state.h"
+#include "state.h"
 
 char* get_input(client_state *state) {
     pthread_mutex_lock(&state->input_lock2);

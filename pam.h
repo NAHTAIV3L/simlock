@@ -1,3 +1,3 @@
-#include "./state.h"
+#include "state.h"
 
 void start_pam(client_state *state);

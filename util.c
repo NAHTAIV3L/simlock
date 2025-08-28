@@ -5,7 +5,7 @@
 #include <wayland-client-protocol.h>
 #include <errno.h>
 #include "array.h"
-#include "./util.h"
+#include "util.h"
 
 void redraw(client_state *state) {
     if (!state->locked) return;
@@ -62,9 +62,18 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
             struct itimerspec timer = {0};
             timerfd_settime(state->key_repeat_timer_fd, 0, &timer, NULL);
         }
+        if (state->xkb_compose_state && xkb_compose_state_get_status(state->xkb_compose_state) == XKB_COMPOSE_COMPOSED) {
+            xkb_compose_state_reset(state->xkb_compose_state);
+        }
         return;
     }
     bool ctrl = xkb_state_mod_name_is_active(state->xkb_state, XKB_MOD_NAME_CTRL, XKB_STATE_MODS_EFFECTIVE);
+
+    enum xkb_compose_status compose_status = XKB_COMPOSE_NOTHING;
+    if (state->xkb_compose_state) {
+        xkb_compose_state_feed(state->xkb_compose_state, keysym);
+        compose_status = xkb_compose_state_get_status(state->xkb_compose_state);
+    }
 
     if (keysym == XKB_KEY_BackSpace && ctrl) {
         array_free(state->buffer);
@@ -92,7 +101,9 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
     }
     else {
         char buf[16] = { 0 };
-        int len = xkb_keysym_to_utf8(keysym, buf, sizeof(buf));
+        int len = (compose_status == XKB_COMPOSE_COMPOSED) ?
+            xkb_compose_state_get_utf8(state->xkb_compose_state, buf, sizeof(buf))
+            : xkb_keysym_to_utf8(keysym, buf, sizeof(buf));
         if (len > 0) {
             for (int i = 0; i < strlen(buf); i++) {
                 array_add(state->buffer, buf[i]);

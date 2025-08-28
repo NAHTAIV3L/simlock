@@ -1,7 +1,7 @@
 #ifndef UTIL_H_
 #define UTIL_H_
 #include <stdint.h>
-#include "./state.h"
+#include "state.h"
 
 char* append_to_string(char* str, char* append);
 

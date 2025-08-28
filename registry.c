@@ -1,5 +1,5 @@
-#include "state.h"
 #include <string.h>
+#include "state.h"
 #include "array.h"
 
 extern struct wl_seat_listener wl_seat_listener;

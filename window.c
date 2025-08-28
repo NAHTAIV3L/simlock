@@ -1,9 +1,7 @@
-
-#include "./window.h"
-#include "./state.h"
-#include "./glad/glad.h"
 #include <stdlib.h>
-#include <wayland-egl-core.h>
+#include "window.h"
+#include "state.h"
+#include "glad/glad.h"
 
 extern PFNEGLCREATEPLATFORMWINDOWSURFACEPROC eglCreatePlatformWindowSurfaceEXT;
 

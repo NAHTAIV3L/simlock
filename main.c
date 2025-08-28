@@ -1,12 +1,11 @@
-#include "state.h"
-#include "util.h"
-#include <EGL/eglext.h>
 #include <string.h>
 #include <unistd.h>
 #include <signal.h>
-#include <stdlib.h>
-#include "./pam.h"
-#include "./array.h"
+#include "state.h"
+#include <EGL/eglext.h>
+#include "util.h"
+#include "pam.h"
+#include "array.h"
 
 extern struct wl_registry_listener wl_registry_listener;
 extern struct ext_session_lock_v1_listener ext_session_lock_listener;

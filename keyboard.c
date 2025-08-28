@@ -1,30 +1,55 @@
-#include "state.h"
 #include <assert.h>
 #include <sys/mman.h>
 #include <unistd.h>
-#include "./util.h"
-#include <string.h>
 #include <wayland-client-protocol.h>
+#include <locale.h>
+#include "state.h"
+#include "util.h"
 
 void wl_keyboard_keymap(void *data, struct wl_keyboard *wl_keyboard,
                         uint32_t format, int32_t fd, uint32_t size) {
     client_state* state = data;
 
-    assert(format == WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1);
+    if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1) {
+        fprintf(stderr, "unknown keyboard format");
+        state->run_unlock = true;
+        return;
+    }
 
-    char* map_shm = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
-    assert(map_shm != MAP_FAILED && "map_shm failed");
+    char* buffer = mmap(NULL, size, PROT_READ, MAP_PRIVATE, fd, 0);
+    if (buffer == MAP_FAILED) {
+        fprintf(stderr, "Failed to mmap keymap");
+        state->run_unlock = true;
+        return;
+    }
 
     state->xkb_context = xkb_context_new(XKB_CONTEXT_NO_FLAGS);
-    assert(state->xkb_context && "Failed to create xkb context");
+    if (!state->xkb_context) {
+        fprintf(stderr, "Failed to create xkb context\n");
+        state->run_unlock = true;
+        return;
+    }
 
-    state->xkb_keymap = xkb_keymap_new_from_string(state->xkb_context, map_shm,
+    state->xkb_keymap = xkb_keymap_new_from_buffer(state->xkb_context, buffer, size - 1,
                                                   XKB_KEYMAP_FORMAT_TEXT_V1,
                                                   XKB_KEYMAP_COMPILE_NO_FLAGS);
-    munmap(map_shm, size);
+    munmap(buffer, size);
     close(fd);
+
     state->xkb_state = xkb_state_new(state->xkb_keymap);
-    assert(state->xkb_state && "Failed to create state");
+    if (!state->xkb_state) {
+        fprintf(stderr, "Failed to create state");
+    }
+
+    struct xkb_compose_table* xkb_compose_table = xkb_compose_table_new_from_locale(
+        state->xkb_context, setlocale(LC_CTYPE, NULL), XKB_COMPOSE_COMPILE_NO_FLAGS);
+
+    if (!xkb_compose_table) {
+        fprintf(stderr, "Failed to create xkb compose table");
+        return;
+    }
+
+    state->xkb_compose_state = xkb_compose_state_new(xkb_compose_table, XKB_COMPOSE_STATE_NO_FLAGS);
 }
 
 void wl_keyboard_enter(void *data, struct wl_keyboard *wl_keyboard,

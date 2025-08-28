@@ -1,5 +1,5 @@
-#include "./state.h"
 #include <stdlib.h>
+#include "state.h"
 
 void ext_session_lock_locked(void *data, struct ext_session_lock_v1 *ext_session_lock_v1) {
     client_state *state = data;

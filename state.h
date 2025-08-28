@@ -5,11 +5,12 @@
 #include <wayland-egl.h>
 #include <wayland-cursor.h>
 #include <xkbcommon/xkbcommon.h>
+#include <xkbcommon/xkbcommon-compose.h>
 #include <stdbool.h>
 #include <pthread.h>
 #include <sys/timerfd.h>
 #include <ext-session-lock-v1.h>
-#include "./window.h"
+#include "window.h"
 #define CLEAR_BLACK 0
 #define CLEAR_GREEN 1
 #define CLEAR_RED 2
@@ -37,6 +38,7 @@ typedef struct _client_state {
     struct xkb_context* xkb_context;
     struct xkb_keymap* xkb_keymap;
     struct xkb_state* xkb_state;
+    struct xkb_compose_state* xkb_compose_state;
 
     EGLDisplay egl_display;
     EGLConfig egl_config;
