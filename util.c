@@ -86,7 +86,7 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
         if (!array_size(state->buffer)) {
             state->clear_color = CLEAR_BLACK;
         }
-        if (key_state == WL_KEYBOARD_KEY_STATE_PRESSED) {
+        if (key_state == WL_KEYBOARD_KEY_STATE_PRESSED && state->repeat_keysym != keysym) {
             start_key_repeat_timer(state, keysym);
         }
     }
@@ -143,7 +143,7 @@ void poll_events(client_state* state) {
             uint64_t repeats;
             if (read(state->key_repeat_timer_fd, &repeats, sizeof(repeats)) == 8) {
                 for (uint64_t i = 0; i < repeats; i++) {
-                    handle_keypress(state, state->repeat_keysym, WL_KEYBOARD_KEY_STATE_REPEATED);
+                    handle_keypress(state, state->repeat_keysym, WL_KEYBOARD_KEY_STATE_PRESSED);
                 }
                 event = true;
             }
