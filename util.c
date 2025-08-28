@@ -1,34 +1,15 @@
-
-#include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
 #include <poll.h>
 #include <unistd.h>
 #include <wayland-client-protocol.h>
 #include <errno.h>
+#include "array.h"
 #include "./util.h"
-
-char* append_to_string(char* str, char* append) {
-    uint32_t len = 1 + strlen(append);
-    if (str) {
-        len += strlen(str);
-    }
-    char *new_str = malloc(len);
-    if (str) {
-        snprintf(new_str, len, "%s%s", str, append);
-    }
-    else {
-        snprintf(new_str, len, "%s", append);
-    }
-    if (str) {
-        free(str);
-    }
-    return new_str;
-}
 
 void redraw(client_state *state) {
     if (!state->locked) return;
-    for (int i = 0; i < state->num_windows; i++) {
+    for (int i = 0; i < array_size(state->windows); i++) {
         window_redraw(&state->windows[i]);
     }
 }
@@ -39,12 +20,10 @@ void unlock(client_state *state) {
     ext_session_lock_v1_unlock_and_destroy(state->ext_session_lock);
     wl_display_roundtrip(state->display);
 
-    for (int i = 0; i < state->num_windows; i++) {
+    for (int i = 0; i < array_size(state->windows); i++) {
         window_destroy(&state->windows[i]);
     }
-    free(state->windows);
-    state->windows = NULL;
-    state->num_windows = 0;
+    array_free(state->windows);
 
     state->running = false;
 }
@@ -88,17 +67,14 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
     bool ctrl = xkb_state_mod_name_is_active(state->xkb_state, XKB_MOD_NAME_CTRL, XKB_STATE_MODS_EFFECTIVE);
 
     if (keysym == XKB_KEY_BackSpace && ctrl) {
-        free(state->buffer);
-        state->buffer = NULL;
-        state->buffer_len = 0;
+        array_free(state->buffer);
         state->clear_color = CLEAR_BLACK;
     }
     else if (keysym == XKB_KEY_BackSpace) {
-        if (state->buffer_len && state->buffer) {
-            state->buffer_len--;
-            state->buffer[state->buffer_len] = 0;
+        if (state->buffer) {
+            array_pop(state->buffer);
         }
-        if (!state->buffer_len) {
+        if (!array_size(state->buffer)) {
             state->clear_color = CLEAR_BLACK;
         }
         if (key_state == WL_KEYBOARD_KEY_STATE_PRESSED) {
@@ -111,17 +87,16 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
             pthread_mutex_lock(&state->input_lock2);
             pthread_mutex_lock(&state->input_lock1);
             pthread_mutex_unlock(&state->input_lock2);
-            free(state->buffer);
-            state->buffer = NULL;
-            state->buffer_len = 0;
+            array_clear(state->buffer);
         }
     }
     else {
         char buf[16] = { 0 };
         int len = xkb_keysym_to_utf8(keysym, buf, sizeof(buf));
-        if (len) {
-            state->buffer = append_to_string(state->buffer, buf);
-            state->buffer_len += len - 1;
+        if (len > 0) {
+            for (int i = 0; i < strlen(buf); i++) {
+                array_add(state->buffer, buf[i]);
+            }
             state->clear_color = CLEAR_GREEN;
         }
     }

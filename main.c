@@ -6,6 +6,7 @@
 #include <signal.h>
 #include <stdlib.h>
 #include "./pam.h"
+#include "./array.h"
 
 extern struct wl_registry_listener wl_registry_listener;
 extern struct ext_session_lock_v1_listener ext_session_lock_listener;
@@ -107,7 +108,6 @@ int main() {
         return 1;
     }
     state.running = true;
-    state.buffer = NULL;
 
     state.key_repeat_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 
@@ -135,7 +135,7 @@ int main() {
     ext_session_lock_v1_add_listener(state.ext_session_lock, &ext_session_lock_listener, &state);
     wl_display_roundtrip(state.display);
 
-    for (int i = 0; i < state.num_windows; i++) {
+    for (int i = 0; i < array_size(state.windows); i++) {
         window_t* win = &state.windows[i];
         win->surface = wl_compositor_create_surface(state.compositor);
         win->ext_session_lock_surface = ext_session_lock_v1_get_lock_surface(state.ext_session_lock, win->surface, win->output);

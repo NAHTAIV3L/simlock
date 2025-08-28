@@ -8,8 +8,8 @@
 #include <stdbool.h>
 #include <pthread.h>
 #include <sys/timerfd.h>
-#include "./window.h"
 #include <ext-session-lock-v1.h>
+#include "./window.h"
 #define CLEAR_BLACK 0
 #define CLEAR_GREEN 1
 #define CLEAR_RED 2
@@ -27,7 +27,6 @@ typedef struct _client_state {
     struct ext_session_lock_v1* ext_session_lock;
 
     window_t* windows;
-    uint32_t num_windows;
 
     struct wl_surface* cursor_surface;
     struct wl_cursor_image* cursor_image;
@@ -45,7 +44,6 @@ typedef struct _client_state {
 
     bool running, opengl_initalized, locked, run_unlock;
     char* buffer;
-    uint32_t buffer_len;
 
     pthread_mutex_t input_lock1, input_lock2;
     int key_repeat_timer_fd;
