@@ -1,15 +1,18 @@
 #include <security/pam_appl.h>
+#include <sys/stat.h>
 #include <pwd.h>
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include "state.h"
+#include "array.h"
 
 char* get_input(client_state *state) {
     pthread_mutex_lock(&state->input_lock2);
     pthread_mutex_lock(&state->input_lock1);
     pthread_mutex_unlock(&state->input_lock2);
+    array_add(state->buffer, 0);
     char* str = strdup(state->buffer);
     pthread_mutex_unlock(&state->input_lock1);
     return str;
@@ -53,7 +56,7 @@ bool pam_auth(client_state* state) {
     }
 
     int retval = 0;
-    retval = pam_start("hyprland", passwd_info->pw_name, &conversation, &pam_handle);
+    retval = pam_start(state->pam_module, passwd_info->pw_name, &conversation, &pam_handle);
 
     if (retval != PAM_SUCCESS)
         return false;
@@ -90,6 +93,19 @@ void *pam_thread(void *data) {
 }
 
 void start_pam(client_state* state) {
+    state->pam_module = "/etc/pam.d/simlock";
+    struct stat st;
+    if (stat(state->pam_module, &st)) {
+        state->pam_module = "/etc/pam.d/su";
+    }
+    int i;
+    for (i = strlen(state->pam_module) - 1; i != 0; i--) {
+        if (state->pam_module[i] == '/') {
+            i++;
+            break;
+        }
+    }
+    printf("Using PAM Module: %s\n", state->pam_module + i);
     pthread_t thread;
     pthread_create(&thread, NULL, pam_thread, state);
     pthread_detach(thread);

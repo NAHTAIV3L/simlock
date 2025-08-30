@@ -3,7 +3,6 @@
 #include <poll.h>
 #include <unistd.h>
 #include <wayland-client-protocol.h>
-#include <errno.h>
 #include "array.h"
 #include "util.h"
 
@@ -40,19 +39,7 @@ void start_key_repeat_timer(client_state* state, xkb_keysym_t keysym) {
     timer.it_value.tv_sec = state->key_repeat_delay / 1000;
     timer.it_value.tv_nsec = (state->key_repeat_delay % 1000) * 1000000;
     if (timerfd_settime(state->key_repeat_timer_fd, 0, &timer, NULL) == -1) {
-        printf("error setting key repeat timer\n"
-               "EBADF=%d\n"
-               "EFAULT=%d\n"
-               "EINVAL=%d\n"
-               "ECANCELED=%d\n"
-               "EINVAL=%d\n"
-               "EINVAL=%d\n",
-               EBADF==errno,
-               EFAULT==errno,
-               EINVAL==errno,
-               ECANCELED==errno,
-               EINVAL==errno,
-               EINVAL==errno);
+        printf("error setting key repeat timer\n");
     }
 }
 
@@ -90,8 +77,9 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
             start_key_repeat_timer(state, keysym);
         }
     }
-    else if (keysym == XKB_KEY_Return) {
+    else if (keysym == XKB_KEY_Return || keysym == XKB_KEY_KP_Enter) {
         if (state->buffer) {
+            printf("Authenticating\n");
             pthread_mutex_unlock(&state->input_lock1);
             pthread_mutex_lock(&state->input_lock2);
             pthread_mutex_lock(&state->input_lock1);

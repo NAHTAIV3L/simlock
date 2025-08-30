@@ -1,0 +1,3 @@
+# PAM configuration file for simlock
+
+auth    required    pam_unix.so     nullok

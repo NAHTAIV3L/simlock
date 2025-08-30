@@ -4,7 +4,6 @@
 #include "state.h"
 #include <EGL/eglext.h>
 #include "util.h"
-#include "pam.h"
 #include "array.h"
 
 extern struct wl_registry_listener wl_registry_listener;
@@ -141,9 +140,6 @@ int main() {
         ext_session_lock_surface_v1_add_listener(win->ext_session_lock_surface, &ext_session_lock_surface_listener, win);
         wl_display_roundtrip(state.display);
     }
-
-    pthread_mutex_lock(&state.input_lock1);
-    start_pam(&state);
 
     while (state.running) {
         poll_events(&state);

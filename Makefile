@@ -50,7 +50,11 @@ compile_flags:
 clean:
 	rm -rf $(BIN) $(OBJDIR)
 
+install: all
+	install -m 755 ./simlock $(PREFIX)/usr/bin
+	install -m 644 -T ./simlock.pam $(PREFIX)/etc/pam.d/simlock
+
 run: all
 	./$(BIN)
 
-.PHONY: all clean run compile_flags
+.PHONY: all clean run compile_flags install

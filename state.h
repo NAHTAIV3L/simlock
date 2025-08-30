@@ -54,6 +54,7 @@ typedef struct _client_state {
 
     int clear_color;
 
+    char* pam_module;
 } client_state;
 
 #endif // STATE_H_
