@@ -13,7 +13,6 @@ void array_print(void* array);
 void array_pop(void* array);
 void* array_add_(void* array, size_t item_size);
 
-
 #define array_clear(array) (((array_info*)(array))[-1].size = 0)
 #define array_size(array) (((array_info*)(array))[-1].size)
 #define array_new(type, capacity) ((type*)(array_new_(sizeof(type), capacity)->array))

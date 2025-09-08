@@ -2,7 +2,7 @@ BIN=simlock
 CC=gcc
 OBJDIR=objs
 LIBS=egl wayland-client gl wayland-egl dbus-1 xkbcommon pam
-CFLAGS=-Wall -g $(shell pkg-config --cflags $(LIBS)) -I$(OBJDIR)
+CFLAGS=-Wall -g $(shell pkg-config --cflags $(LIBS)) -I$(OBJDIR) -DPAM_MODULE=\"$(BIN)\"
 LDFLAGS=$(shell pkg-config --libs $(LIBS))
 VPATH=/usr/share/wayland-protocols/staging/ext-session-lock/:$(OBJDIR)
 WLPROT=ext-session-lock-v1.xml
@@ -19,29 +19,29 @@ $(OBJDIR):
 	[ -d $@ ] || mkdir -p $@
 
 $(BIN): $(OBJ)
-	printf "\tLD %s\n" $@
+	printf "  LD %s\n" $@
 	$(CC) $(LDFLAGS) $^ -o $@
 
 $(OBJDIR)/%.o: %.c %.h
-	printf "\tCC %s\n" $@
+	printf "  CC %s\n" $@
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: */%.c */%.h
-	printf "\tCC %s\n" $@
+	printf "  CC %s\n" $@
 	$(CC) $(CFLAGS) -c $< -o $@
 
 $(OBJDIR)/%.o: %.c
-	printf "\tCC %s\n" $@
+	printf "  CC %s\n" $@
 	$(CC) $(CFLAGS) -c $< -o $@
 
 .PRECIOUS: $(OBJDIR)/%.c
 $(OBJDIR)/%.c: %.xml $(OBJDIR)/%.h
-	printf "\twayland-scanner %s\n" $@
+	printf "  wayland-scanner %s\n" $@
 	wayland-scanner private-code $<  $@
 
 .PRECIOUS: $(OBJDIR)/%.h
 $(OBJDIR)/%.h: %.xml
-	printf "\twayland-scanner %s\n" $@
+	printf "  wayland-scanner %s\n" $@
 	wayland-scanner client-header $<  $@
 
 compile_flags:
@@ -51,10 +51,13 @@ clean:
 	rm -rf $(BIN) $(OBJDIR)
 
 install: all
-	install -m 755 ./simlock $(PREFIX)/usr/bin
-	install -m 644 -T ./simlock.pam $(PREFIX)/etc/pam.d/simlock
+	install -m 755 ./$(BIN) $(PREFIX)/usr/bin
+	install -m 644 -T ./pam-module $(PREFIX)/etc/pam.d/$(BIN)
+
+uninstall:
+	rm -rf $(PREFIX)/usr/bin/$(BIN) $(PREFIX)/etc/pam.d/$(BIN)
 
 run: all
 	./$(BIN)
 
-.PHONY: all clean run compile_flags install
+.PHONY: all clean run compile_flags install uninstall

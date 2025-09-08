@@ -8,6 +8,8 @@
 #include "state.h"
 #include "array.h"
 
+#define STRING(x) #x
+
 char* get_input(client_state *state) {
     pthread_mutex_lock(&state->input_lock2);
     pthread_mutex_lock(&state->input_lock1);
@@ -93,7 +95,7 @@ void *pam_thread(void *data) {
 }
 
 void start_pam(client_state* state) {
-    state->pam_module = "/etc/pam.d/simlock";
+    state->pam_module = "/etc/pam.d/"PAM_MODULE;
     struct stat st;
     if (stat(state->pam_module, &st)) {
         state->pam_module = "/etc/pam.d/su";

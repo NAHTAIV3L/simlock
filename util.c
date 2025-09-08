@@ -46,6 +46,7 @@ void start_key_repeat_timer(client_state* state, xkb_keysym_t keysym) {
 void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_state) {
     if (key_state == WL_KEYBOARD_KEY_STATE_RELEASED) {
         if (keysym == state->repeat_keysym) {
+            state->repeat_keysym = 0;
             struct itimerspec timer = {0};
             timerfd_settime(state->key_repeat_timer_fd, 0, &timer, NULL);
         }
@@ -63,14 +64,17 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
     }
 
     if (keysym == XKB_KEY_BackSpace && ctrl) {
-        array_free(state->buffer);
+        array_clear(state->buffer);
         state->clear_color = CLEAR_BLACK;
     }
     else if (keysym == XKB_KEY_BackSpace) {
         if (state->buffer) {
             array_pop(state->buffer);
+            if (!array_size(state->buffer)) {
+                state->clear_color = CLEAR_BLACK;
+            }
         }
-        if (!array_size(state->buffer)) {
+        else {
             state->clear_color = CLEAR_BLACK;
         }
         if (key_state == WL_KEYBOARD_KEY_STATE_PRESSED && state->repeat_keysym != keysym) {
