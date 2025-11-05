@@ -36,10 +36,10 @@ int conv(int num_msg, const struct pam_message **msg, struct pam_response **resp
                 response->resp = input;
             } break;
             case PAM_ERROR_MSG: {
-                printf("%s\n", msg[i]->msg);
+                fprintf(stderr, "%s\n", msg[i]->msg);
             }
             case PAM_TEXT_INFO: {
-                printf("%s\n", msg[i]->msg);
+                fprintf(stderr, "%s\n", msg[i]->msg);
             }
         }
     }
@@ -82,11 +82,11 @@ void *pam_thread(void *data) {
             return NULL;
         }
         if (!auth) {
-            printf("Authentication Failed\n");
+            fprintf(stderr, "Authentication Failed\n");
             state->clear_color = CLEAR_RED;
         }
         else {
-            printf("Authenticated\n");
+            fprintf(stderr, "Authenticated\n");
             state->run_unlock = true;
             return NULL;
         }
@@ -107,7 +107,7 @@ void start_pam(client_state* state) {
             break;
         }
     }
-    printf("Using PAM Module: %s\n", state->pam_module + i);
+    fprintf(stderr, "Using PAM Module: %s\n", state->pam_module + i);
     pthread_t thread;
     pthread_create(&thread, NULL, pam_thread, state);
     pthread_detach(thread);

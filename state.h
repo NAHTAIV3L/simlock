@@ -10,10 +10,14 @@
 #include <pthread.h>
 #include <sys/timerfd.h>
 #include <ext-session-lock-v1.h>
+#include <dbus/dbus.h>
 #include "window.h"
 #define CLEAR_BLACK 0
 #define CLEAR_GREEN 1
 #define CLEAR_RED 2
+
+#define VERIFY_NO_MATCH 0
+#define VERIFY_MATCH 1
 
 typedef struct _client_state {
     struct wl_display* display;
@@ -55,6 +59,16 @@ typedef struct _client_state {
     int clear_color;
 
     char* pam_module;
+
+    DBusConnection* conn;
+    DBusError err;
+    char* fprint_device;
+    char* fprint_finger;
+    bool dbus;
+    bool dbus_done;
+    bool fprint_claimed;
+    bool fprint_verifying;
+    int verify_status;
 } client_state;
 
 #endif // STATE_H_
