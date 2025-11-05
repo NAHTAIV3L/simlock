@@ -3,6 +3,7 @@
 #include <signal.h>
 #include "state.h"
 #include <EGL/eglext.h>
+#include "fprint.h"
 #include "util.h"
 #include "array.h"
 
@@ -94,7 +95,7 @@ static client_state state = { 0 };
 void handle_sigusr1(int sig) {
     if (sig == SIGUSR1) {
         state.run_unlock = true;
-        printf("Unlocking due to SIGUSR1\n");
+        fprintf(stderr, "Unlocking due to SIGUSR1\n");
     }
 }
 
@@ -141,6 +142,10 @@ int main() {
         wl_display_roundtrip(state.display);
     }
 
+    if (dbus_init(&state)) {
+        start_dbus_thread(&state);
+    }
+
     while (state.running) {
         poll_events(&state);
         redraw(&state);
@@ -149,6 +154,10 @@ int main() {
     wl_display_dispatch(state.display);
     unlock(&state);
 
-    printf("Unlocking session\n");
+    if (state.dbus) {
+        dbus_deinit(&state);
+    }
+
+    fprintf(stderr, "Unlocking session\n");
     return 0;
 }

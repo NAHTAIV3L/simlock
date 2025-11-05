@@ -39,7 +39,7 @@ void start_key_repeat_timer(client_state* state, xkb_keysym_t keysym) {
     timer.it_value.tv_sec = state->key_repeat_delay / 1000;
     timer.it_value.tv_nsec = (state->key_repeat_delay % 1000) * 1000000;
     if (timerfd_settime(state->key_repeat_timer_fd, 0, &timer, NULL) == -1) {
-        printf("error setting key repeat timer\n");
+        fprintf(stderr, "Error setting key repeat timer\n");
     }
 }
 
@@ -83,7 +83,7 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
     }
     else if (keysym == XKB_KEY_Return || keysym == XKB_KEY_KP_Enter) {
         if (state->buffer) {
-            printf("Authenticating\n");
+            fprintf(stderr, "Authenticating\n");
             pthread_mutex_unlock(&state->input_lock1);
             pthread_mutex_lock(&state->input_lock2);
             pthread_mutex_lock(&state->input_lock1);
