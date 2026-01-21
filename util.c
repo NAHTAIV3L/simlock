@@ -6,6 +6,8 @@
 #include "array.h"
 #include "util.h"
 
+#define ARRAY_LEN(x) (sizeof(x) / sizeof(x[0]))
+
 void redraw(client_state *state) {
     if (!state->locked) return;
     for (int i = 0; i < array_size(state->windows); i++) {
@@ -119,7 +121,7 @@ void poll_events(client_state* state) {
                 return;
             }
         }
-        if (poll(fds, sizeof(fds) / sizeof(fds[0]), -1) == -1) {
+        if (poll(fds, ARRAY_LEN(fds), -1) == -1) {
             wl_display_cancel_read(state->display);
             return;
         }

@@ -3,6 +3,7 @@
 #include <signal.h>
 #include "state.h"
 #include <EGL/eglext.h>
+#include "dbus.h"
 #include "fprint.h"
 #include "util.h"
 #include "array.h"
@@ -100,6 +101,9 @@ void handle_sigusr1(int sig) {
 }
 
 int main() {
+    dbus_connection_init(1);
+    return 0;
+
     struct sigaction sigact = { 0 };
     sigact.sa_handler = handle_sigusr1;
     if (sigaction(SIGUSR1, &sigact, NULL) == -1) {
@@ -142,22 +146,27 @@ int main() {
         wl_display_roundtrip(state.display);
     }
 
-    if (dbus_init(&state)) {
+    if (dbus_init_1(&state)) {
         start_dbus_thread(&state);
     }
 
     while (state.running) {
+        if (state.dbus) {
+            while (dbus_connection_dispatch(state.conn) == DBUS_DISPATCH_DATA_REMAINS);
+        }
         poll_events(&state);
         redraw(&state);
         if (state.run_unlock) break;
     }
     wl_display_dispatch(state.display);
     unlock(&state);
+    state.dbus_done = true;
 
     if (state.dbus) {
         dbus_deinit(&state);
     }
 
     fprintf(stderr, "Unlocking session\n");
+    exit(0);
     return 0;
 }

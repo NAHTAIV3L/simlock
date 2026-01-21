@@ -19,6 +19,12 @@
 #define VERIFY_NO_MATCH 0
 #define VERIFY_MATCH 1
 
+typedef struct {
+    DBusWatch* watch;
+    int fd;
+    int events;
+} watch_t;
+
 typedef struct _client_state {
     struct wl_display* display;
     struct wl_registry* registry;
@@ -62,8 +68,12 @@ typedef struct _client_state {
 
     DBusConnection* conn;
     DBusError err;
+
+    pthread_mutex_t dbus_mutex;
+    pthread_t dbus_thread;
     char* fprint_device;
     char* fprint_finger;
+    watch_t* watches;
     bool dbus;
     bool dbus_done;
     bool fprint_claimed;

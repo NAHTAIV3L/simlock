@@ -2,7 +2,7 @@
 #define FPRINT_H_
 #include "state.h"
 
-bool dbus_init(client_state* state);
+bool dbus_init_1(client_state* state);
 void dbus_deinit(client_state* state);
 
 bool verify_fingerprint(client_state* state);

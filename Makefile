@@ -51,11 +51,11 @@ clean:
 	rm -rf $(BIN) $(OBJDIR)
 
 install: all
-	install -m 755 ./$(BIN) $(PREFIX)/usr/bin
-	install -m 644 -T ./pam-module $(PREFIX)/etc/pam.d/$(BIN)
+	install -m 755 ./$(BIN) $(DESTDIR)/$(PREFIX)/bin
+	install -m 644 -T ./pam-module $(DESTDIR)/etc/pam.d/$(BIN)
 
 uninstall:
-	rm -rf $(PREFIX)/usr/bin/$(BIN) $(PREFIX)/etc/pam.d/$(BIN)
+	rm -rf $(DESTDIR)/$(PREFIX)/bin/$(BIN) $(DESTDIR)/etc/pam.d/$(BIN)
 
 run: all
 	./$(BIN)
