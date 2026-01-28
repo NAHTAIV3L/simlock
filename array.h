@@ -11,7 +11,7 @@ typedef struct {
 array_info* array_new_(size_t item_size, size_t capacity);
 void array_print(void* array);
 void array_pop(void* array);
-void* array_add_(void* array, size_t item_size);
+void* array_resize_(void* array, size_t item_size);
 
 #define array_clear(array) (((array_info*)(array))[-1].size = 0)
 #define array_size(array) (((array_info*)(array))[-1].size)
@@ -23,7 +23,7 @@ void* array_add_(void* array, size_t item_size);
 } while (0)
 
 #define array_add(array, value) do {                        \
-    void* __temp = array_add_((array), sizeof(*(array)));   \
+    void* __temp = array_resize_((array), sizeof(*(array)));   \
     (array) = __temp;                                       \
     (array)[array_size((array)) - 1] = value;               \
 } while (0)

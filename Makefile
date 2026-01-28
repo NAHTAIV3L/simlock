@@ -1,6 +1,7 @@
 BIN=simlock
 CC=gcc
 OBJDIR=objs
+PREFIX=/usr
 LIBS=egl wayland-client gl wayland-egl dbus-1 xkbcommon pam
 CFLAGS=-Wall -g $(shell pkg-config --cflags $(LIBS)) -I$(OBJDIR) -DPAM_MODULE=\"$(BIN)\"
 LDFLAGS=$(shell pkg-config --libs $(LIBS))
