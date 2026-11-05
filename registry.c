@@ -32,7 +32,7 @@ void wl_registry_global(void *data, struct wl_registry *wl_registry,
         if (state->locked) {
             win->surface = wl_compositor_create_surface(state->compositor);
             win->ext_session_lock_surface = ext_session_lock_v1_get_lock_surface(state->ext_session_lock, win->surface, win->output);
-            ext_session_lock_surface_v1_add_listener(win->ext_session_lock_surface, &ext_session_lock_surface_listener, &state);
+            ext_session_lock_surface_v1_add_listener(win->ext_session_lock_surface, &ext_session_lock_surface_listener, win);
             wl_display_roundtrip(state->display);
         }
         win->name = name;

@@ -10,8 +10,8 @@ extern struct wl_registry_listener wl_registry_listener;
 extern struct ext_session_lock_v1_listener ext_session_lock_listener;
 extern struct ext_session_lock_surface_v1_listener ext_session_lock_surface_listener;
 
-PFNEGLGETPLATFORMDISPLAYPROC eglGetPlatformDisplayEXT = NULL;
-PFNEGLCREATEPLATFORMWINDOWSURFACEPROC eglCreatePlatformWindowSurfaceEXT = NULL;
+PFNEGLGETPLATFORMDISPLAYEXTPROC eglGetPlatformDisplayEXT = NULL;
+PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC eglCreatePlatformWindowSurfaceEXT = NULL;
 
 bool initalize_egl(client_state *state) {
 
@@ -46,12 +46,12 @@ bool initalize_egl(client_state *state) {
         return false;
     }
 
-    eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
+    eglGetPlatformDisplayEXT = (PFNEGLGETPLATFORMDISPLAYEXTPROC)eglGetProcAddress("eglGetPlatformDisplayEXT");
     if (!eglGetPlatformDisplayEXT) {
         fprintf(stderr, "Failed to get eglGetPlatformDisplayEXT\n");
         return false;
     }
-    eglCreatePlatformWindowSurfaceEXT = (PFNEGLCREATEPLATFORMWINDOWSURFACEPROC)eglGetProcAddress("eglCreatePlatformWindowSurfaceEXT");
+    eglCreatePlatformWindowSurfaceEXT = (PFNEGLCREATEPLATFORMWINDOWSURFACEEXTPROC)eglGetProcAddress("eglCreatePlatformWindowSurfaceEXT");
     if (!eglCreatePlatformWindowSurfaceEXT) {
         fprintf(stderr, "Failed to get eglCreatePlatformWindowSurfaceEXT\n");
         return false;
