@@ -108,6 +108,7 @@ int main() {
     }
     state.running = true;
     state.buffer = array_new(char, 16);
+    array_clear(state.buffer);
     state.key_repeat_timer_fd = timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC);
 
     state.display = wl_display_connect(NULL);

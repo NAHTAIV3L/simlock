@@ -27,20 +27,20 @@ int conv(int num_msg, const struct pam_message **msg, struct pam_response **resp
 
     for (int i = 0; i < num_msg; i++) {
         switch (msg[i]->msg_style) {
-            case PAM_PROMPT_ECHO_OFF:
-            case PAM_PROMPT_ECHO_ON: {
-                if (!state->locked) {
-                    return PAM_CONV_ERR;
-                }
-                char* input = get_input(state);
-                response->resp = input;
-            } break;
-            case PAM_ERROR_MSG: {
-                fprintf(stderr, "%s\n", msg[i]->msg);
+        case PAM_PROMPT_ECHO_OFF:
+        case PAM_PROMPT_ECHO_ON: {
+            if (!state->locked) {
+                return PAM_CONV_ERR;
             }
-            case PAM_TEXT_INFO: {
-                fprintf(stderr, "%s\n", msg[i]->msg);
-            }
+            char* input = get_input(state);
+            response->resp = input;
+        } break;
+        case PAM_ERROR_MSG: {
+            fprintf(stderr, "%s\n", msg[i]->msg);
+        }
+        case PAM_TEXT_INFO: {
+            fprintf(stderr, "%s\n", msg[i]->msg);
+        }
         }
     }
 
@@ -112,4 +112,3 @@ void start_pam(client_state* state) {
     pthread_create(&thread, NULL, pam_thread, state);
     pthread_detach(thread);
 }
-
