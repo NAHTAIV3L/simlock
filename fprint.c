@@ -23,13 +23,14 @@ DBusHandlerResult filter(DBusConnection *conn, DBusMessage *msg, void *data) {
         char* status = NULL;
         dbus_message_iter_get_basic(&iter, &status);
         fprintf(stderr, "fprintd: %s\n", status);
-        if (!strcmp(status, "verify-no-match") ||
-            !strcmp(status, "verify-unknown-error")) {
-            state->verify_finished = true;
+        if (!strcmp(status, "verify-no-match")) {
+            state->verify_state = VERIFY_FAIL;
+        }
+        if(!strcmp(status, "verify-unknown-error")) {
+            state->verify_state = VERIFY_UNKNOWN_ERROR;
         }
         else if (!strcmp(status, "verify-match")) {
-            state->verify_finished = true;
-            state->run_unlock = true;
+            state->verify_state = VERIFY_SUCCESS;
         }
         return DBUS_HANDLER_RESULT_HANDLED;
     }
@@ -266,7 +267,7 @@ void dbus_deinit(client_state* state) {
 }
 
 bool fprint_start_verify(client_state* state) {
-    state->verify_finished = false;
+    state->verify_state = VERIFY_NONE;
     if (!dbus_fprint_claim_device(state)) {
         fprintf(stderr, "failed to claim device\n");
         return false;

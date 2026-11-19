@@ -12,13 +12,17 @@
 #include <ext-session-lock-v1.h>
 #include <dbus/dbus.h>
 #include "window.h"
-#define CLEAR_BLACK 0
-#define CLEAR_GREEN 1
-#define CLEAR_RED 2
+
+enum {
+    CLEAR_BLACK = 0,
+    CLEAR_GREEN,
+    CLEAR_RED,
+};
 
 enum {
     VERIFY_NONE = 0,
     VERIFY_FAIL,
+    VERIFY_UNKNOWN_ERROR,
     VERIFY_SUCCESS,
 };
 
@@ -68,7 +72,7 @@ typedef struct _client_state {
     char* fprint_device;
     char* fprint_finger;
     bool dbus;
-    bool verify_finished;
+    int verify_state;
     bool fprint_claimed;
     bool fprint_verifying;
     int fprint_verify_count;

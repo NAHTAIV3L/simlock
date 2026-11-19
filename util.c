@@ -151,18 +151,24 @@ void poll_events(client_state* state) {
             event = true;
             dbus_connection_read_write(state->conn, 0);
             while (dbus_connection_dispatch(state->conn) == DBUS_DISPATCH_DATA_REMAINS);
-            if (state->verify_finished) {
-                if (!state->run_unlock && state->fprint_verify_count < 2) {
-                    state->clear_color = CLEAR_RED;
-                    state->fprint_verify_count++;
+            switch (state->verify_state) {
+            case VERIFY_SUCCESS:
+                state->run_unlock = true;
+                break;
+            case VERIFY_FAIL:
+                state->clear_color = CLEAR_RED;
+                state->fprint_verify_count++;
+            case VERIFY_UNKNOWN_ERROR:
+                if (state->fprint_verify_count < 3) {
                     if (!fprint_stop_verify(state)) {
                         fprintf(stderr, "Failed to stop fprintd verify\n");
-                        continue;
+                        break;
                     }
                     if (fprint_start_verify(state)) {
                         fprintf(stderr, "Failed to start fprintd verify\n");
                     }
                 }
+            default:
             }
         }
     }
