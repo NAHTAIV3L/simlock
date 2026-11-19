@@ -5,7 +5,6 @@
 bool dbus_init(client_state* state);
 void dbus_deinit(client_state* state);
 
-bool verify_fingerprint(client_state* state);
-
-void start_dbus_thread(client_state* state);
+bool fprint_start_verify(client_state* state);
+bool fprint_stop_verify(client_state* state);
 #endif // FPRINT_H_

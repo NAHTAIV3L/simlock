@@ -1,4 +1,5 @@
 #include <string.h>
+#include <poll.h>
 #include "fprint.h"
 
 #define FPRINT "net.reactivated.Fprint"
@@ -23,12 +24,12 @@ DBusHandlerResult filter(DBusConnection *conn, DBusMessage *msg, void *data) {
         dbus_message_iter_get_basic(&iter, &status);
         fprintf(stderr, "fprintd: %s\n", status);
         if (!strcmp(status, "verify-no-match") ||
-            !strcmp(status, "verify-match") ||
             !strcmp(status, "verify-unknown-error")) {
-            state->dbus_done = true;
-            if (!strcmp(status, "verify-match")) {
-                state->verify_status = VERIFY_MATCH;
-            }
+            state->verify_finished = true;
+        }
+        else if (!strcmp(status, "verify-match")) {
+            state->verify_finished = true;
+            state->run_unlock = true;
         }
         return DBUS_HANDLER_RESULT_HANDLED;
     }
@@ -264,7 +265,8 @@ void dbus_deinit(client_state* state) {
     dbus_error_free(&state->err);
 }
 
-bool verify_fingerprint(client_state* state) {
+bool fprint_start_verify(client_state* state) {
+    state->verify_finished = false;
     if (!dbus_fprint_claim_device(state)) {
         fprintf(stderr, "failed to claim device\n");
         return false;
@@ -275,10 +277,10 @@ bool verify_fingerprint(client_state* state) {
         return false;
     }
     dbus_connection_flush(state->conn);
+    return true;
+}
 
-    state->dbus_done = false;
-    while (!state->dbus_done && dbus_connection_read_write_dispatch(state->conn, DBUS_TIMEOUT_INFINITE));
-
+bool fprint_stop_verify(client_state* state) {
     if (!dbus_fprint_verify_stop(state)) {
         fprintf(stderr, "failed to stop verify\n");
         return false;
@@ -288,26 +290,86 @@ bool verify_fingerprint(client_state* state) {
         fprintf(stderr, "failed to release device\n");
         return false;
     }
+    dbus_connection_flush(state->conn);
     return true;
-
 }
 
-void* dbus_thread(void* data) {
-    client_state *state = data;
-    for (int i = 0; i < 3; i++) {
-        verify_fingerprint(state);
-        if (state->verify_status == VERIFY_MATCH) {
-            state->run_unlock = true;
-            break;
-        }
-        state->clear_color = CLEAR_RED;
-    }
-    return NULL;
-}
+/* bool verify_fingerprint(client_state* state) { */
+/*     if (!dbus_fprint_claim_device(state)) { */
+/*         fprintf(stderr, "failed to claim device\n"); */
+/*         return false; */
+/*     } */
 
-void start_dbus_thread(client_state* state) {
-    fprintf(stderr, "Running fprintd auth\n");
-    pthread_t thread;
-    pthread_create(&thread, NULL, dbus_thread, state);
-    pthread_detach(thread);
-}
+/*     if (!dbus_fprint_verify_start(state)) { */
+/*         fprintf(stderr, "failed to start verify\n"); */
+/*         return false; */
+/*     } */
+/*     dbus_connection_flush(state->conn); */
+
+/*     state->dbus_done = false; */
+/*     while (!state->dbus_done && dbus_connection_read_write_dispatch(state->conn, DBUS_TIMEOUT_INFINITE)); */
+
+/*     if (!dbus_fprint_verify_stop(state)) { */
+/*         fprintf(stderr, "failed to stop verify\n"); */
+/*         return false; */
+/*     } */
+
+/*     if (!dbus_fprint_release_device(state)) { */
+/*         fprintf(stderr, "failed to release device\n"); */
+/*         return false; */
+/*     } */
+/*     return true; */
+/* } */
+
+/* void* dbus_thread(void* data) { */
+/*     client_state *state = data; */
+/*     for (int i = 0; i < 3; i++) { */
+/*         verify_fingerprint(state); */
+/*         if (state->verify_status == VERIFY_MATCH) { */
+/*             state->run_unlock = true; */
+/*             break; */
+/*         } */
+/*         state->clear_color = CLEAR_RED; */
+/*     } */
+/*     return NULL; */
+/* } */
+
+/* void start_dbus_thread(client_state* state) { */
+/*     fprintf(stderr, "Running fprintd auth\n"); */
+/*     pthread_t thread; */
+/*     pthread_create(&thread, NULL, dbus_thread, state); */
+/*     pthread_detach(thread); */
+/* } */
+
+
+/* void dbus_test(client_state* state) { */
+/*     dbus_init(state); */
+/*     int fd; */
+/*     dbus_connection_get_unix_fd(state->conn, &fd); */
+/*     struct pollfd fds[] = { */
+/*         { fd, POLLIN }, */
+/*     }; */
+/*     start_verify(state); */
+/*     while (state->running) { */
+/*         if (poll(fds, sizeof(fds) / sizeof(fds[0]), -1) == -1) { */
+/*         } */
+/*         if (fds[0].revents & POLLIN) { */
+/*             dbus_connection_read_write(state->conn, 0); */
+/*             while (dbus_connection_dispatch(state->conn) == */
+/*                    DBUS_DISPATCH_DATA_REMAINS) { */
+/*             } */
+/*             if (state->verify_finished) { */
+/*                 if (state->run_unlock) { */
+/*                     fprintf(stderr, "NICE\n"); */
+/*                 } */
+/*                 else if (state->fprint_verify_count < 2) { */
+/*                     state->fprint_verify_count++; */
+/*                     stop_verify(state); */
+/*                     start_verify(state); */
+/*                 } */
+/*             } */
+/*         } */
+/*         if (state->run_unlock) break; */
+/*     } */
+/*     dbus_deinit(state); */
+/* } */

@@ -16,8 +16,11 @@
 #define CLEAR_GREEN 1
 #define CLEAR_RED 2
 
-#define VERIFY_NO_MATCH 0
-#define VERIFY_MATCH 1
+enum {
+    VERIFY_NONE = 0,
+    VERIFY_FAIL,
+    VERIFY_SUCCESS,
+};
 
 typedef struct _client_state {
     struct wl_display* display;
@@ -65,10 +68,10 @@ typedef struct _client_state {
     char* fprint_device;
     char* fprint_finger;
     bool dbus;
-    bool dbus_done;
+    bool verify_finished;
     bool fprint_claimed;
     bool fprint_verifying;
-    int verify_status;
+    int fprint_verify_count;
 } client_state;
 
 #endif // STATE_H_

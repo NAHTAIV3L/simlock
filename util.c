@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <wayland-client-protocol.h>
 #include "array.h"
+#include "fprint.h"
 #include "util.h"
 
 void redraw(client_state *state) {
@@ -106,10 +107,16 @@ void handle_keypress(client_state* state, xkb_keysym_t keysym, uint32_t key_stat
 }
 
 void poll_events(client_state* state) {
-    enum { DISPLAY_FD, KEYREPEAT_FD };
+    enum { DISPLAY_FD = 0, KEYREPEAT_FD, DBUS_FD, MAX_FDS };
+    int fd = -1;
+    int num_fds = MAX_FDS - 1;
+    if (state->dbus) {
+        if (dbus_connection_get_unix_fd(state->conn, &fd)) num_fds++;
+    }
     struct pollfd fds[] = {
         [DISPLAY_FD] = { wl_display_get_fd(state->display), POLLIN },
         [KEYREPEAT_FD] = { state->key_repeat_timer_fd, POLLIN },
+        [DBUS_FD] = { fd, POLLIN },
     };
 
     bool event = false;
@@ -119,7 +126,7 @@ void poll_events(client_state* state) {
                 return;
             }
         }
-        if (poll(fds, sizeof(fds) / sizeof(fds[0]), -1) == -1) {
+        if (poll(fds, num_fds, -1) == -1) {
             wl_display_cancel_read(state->display);
             return;
         }
@@ -138,6 +145,24 @@ void poll_events(client_state* state) {
                     handle_keypress(state, state->repeat_keysym, WL_KEYBOARD_KEY_STATE_PRESSED);
                 }
                 event = true;
+            }
+        }
+        if (fds[DBUS_FD].revents & POLLIN && state->dbus) {
+            event = true;
+            dbus_connection_read_write(state->conn, 0);
+            while (dbus_connection_dispatch(state->conn) == DBUS_DISPATCH_DATA_REMAINS);
+            if (state->verify_finished) {
+                if (!state->run_unlock && state->fprint_verify_count < 2) {
+                    state->clear_color = CLEAR_RED;
+                    state->fprint_verify_count++;
+                    if (!fprint_stop_verify(state)) {
+                        fprintf(stderr, "Failed to stop fprintd verify\n");
+                        continue;
+                    }
+                    if (fprint_start_verify(state)) {
+                        fprintf(stderr, "Failed to start fprintd verify\n");
+                    }
+                }
             }
         }
     }

@@ -143,7 +143,7 @@ int main() {
     }
 
     if (dbus_init(&state)) {
-        start_dbus_thread(&state);
+        fprint_start_verify(&state);
     }
 
     while (state.running) {
