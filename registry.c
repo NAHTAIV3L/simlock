@@ -10,11 +10,11 @@ void wl_registry_global(void *data, struct wl_registry *wl_registry,
                         uint32_t version) {
     client_state *state = data;
 
-    printf("iface: %s v%d\n", interface, version);
+    // printf("iface: %s v%d\n", interface, version);
 
     if (!strcmp(interface, wl_compositor_interface.name)) {
         state->compositor = wl_registry_bind(wl_registry, name, &wl_compositor_interface, version);
-        printf(" > bound to %s v%d\n", interface, version);
+        // printf(" > bound to %s v%d\n", interface, version);
     }
     else if (!strcmp(interface, wl_shm_interface.name)) {
         state->shm = wl_registry_bind(wl_registry, name, &wl_shm_interface, version);
@@ -22,7 +22,7 @@ void wl_registry_global(void *data, struct wl_registry *wl_registry,
     else if (!strcmp(interface, wl_seat_interface.name)) {
         state->seat = wl_registry_bind(wl_registry, name, &wl_seat_interface, version);
         wl_seat_add_listener(state->seat, &wl_seat_listener, state);
-        printf(" > bound to %s v%d\n", interface, version);
+        // printf(" > bound to %s v%d\n", interface, version);
     }
     else if (!strcmp(interface, wl_output_interface.name)) {
         array_add(state->windows, (window_t){ 0 });
@@ -36,11 +36,11 @@ void wl_registry_global(void *data, struct wl_registry *wl_registry,
             wl_display_roundtrip(state->display);
         }
         win->name = name;
-        printf(" > bound to %s v%d\n", interface, version);
+        // printf(" > bound to %s v%d\n", interface, version);
     }
     else if (!strcmp(interface, ext_session_lock_manager_v1_interface.name)) {
         state->ext_session_lock_manager = wl_registry_bind(wl_registry, name, &ext_session_lock_manager_v1_interface, version);
-        printf(" > bound to %s v%d\n", interface, version);
+        // printf(" > bound to %s v%d\n", interface, version);
     }
 }
 
